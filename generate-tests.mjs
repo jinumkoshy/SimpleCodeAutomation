@@ -3,28 +3,34 @@ import path from "path";
 import simpleGit from "simple-git";
 import { execSync } from "child_process";
 import { OpenAI } from "openai";
-import { glob } from "glob";
 
 // Initialize OpenAI with the API key from the environment
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Get the list of changed files from the pull request
+// Get the list of changed files from the source and destination branches
 const getChangedFiles = () => {
-    console.log("Getting list of changed files in the pull request...");
+    console.log("Getting list of changed files between the source and destination branches...");
 
-    let changedFiles;
     try {
-        // Check for changes in the pull request using the last commit
-        changedFiles = execSync("git diff --name-only HEAD^", { encoding: "utf-8" });
-    } catch (error) {
-        // Handle the case where HEAD^ is invalid (e.g., first commit or shallow clone)
-        console.warn("HEAD^ is invalid. Falling back to the initial commit.");
-        changedFiles = execSync("git diff --name-only HEAD", { encoding: "utf-8" });
-    }
+        // Get the name of the source and destination branches from the PR
+        const sourceBranch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).trim();
+        const destinationBranch = execSync("git rev-parse --abbrev-ref origin/main", { encoding: "utf-8" }).trim();
 
-    return changedFiles.split("\n").filter((file) => file.trim().length > 0);
+        console.log(`Comparing changes from source branch: ${sourceBranch} to destination branch: ${destinationBranch}`);
+
+        // Fetch the latest changes for the destination branch
+        execSync(`git fetch origin ${destinationBranch}`);
+
+        // Get the list of changed files
+        const changedFiles = execSync(`git diff --name-only origin/${destinationBranch}..${sourceBranch}`, { encoding: "utf-8" });
+
+        return changedFiles.split("\n").filter((file) => file.trim().length > 0);
+    } catch (error) {
+        console.error("Error fetching changed files:", error.message);
+        return [];
+    }
 };
 
 // Generate unit tests with OpenAI
