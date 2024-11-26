@@ -16,7 +16,7 @@ const getLatestReleases = (releases) =>
     }
     return acc
   }, {})
-
+ 
 exports.dependencies = (req, res) => {
   const dependencies = Object.entries(
     packageJson.dependencies
