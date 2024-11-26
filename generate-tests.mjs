@@ -9,6 +9,23 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_TOKEN
 });
 
+const configureGitWithToken = (gitToken, repoUrl) => {
+    if (!gitToken) {
+        throw new Error("GIT_PERSONAL_ACCESS_TOKEN is not set in the environment.");
+    }
+
+    const remoteUrl = `https://${gitToken}@${repoUrl.replace('https://', '')}`;
+
+    const git = simpleGit();
+
+    // Configure Git credentials
+    git.addConfig('user.name', 'Your Name') // Replace with your name
+        .addConfig('user.email', 'your-email@example.com') // Replace with your email
+        .addConfig('remote.origin.url', remoteUrl);
+
+    return git;
+};
+
 // Get the list of changed files from the source and destination branches
 const getChangedFiles = () => {
     console.log("Getting list of changed files between the source and destination branches...");
@@ -113,8 +130,11 @@ const main = async () => {
             }
         }
 
-        // Stage changes
-        const git = simpleGit();
+        const gitToken = process.env.GITHUB_TOKEN;
+        // GitHub repository URL (e.g., 'github.com/username/repo.git')
+        const repoUrl = process.env.REPO_URL || 'github.com/jinumkoshy/SimpleCodeAutomation.git';
+        // Initialize Git with token authentication
+        const git = configureGitWithToken(gitToken, repoUrl);
         await git.add(".");
         await git.commit("Add/Update unit tests for changed files");
         await git.push();
