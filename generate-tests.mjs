@@ -3,19 +3,42 @@ import path from "path";
 import simpleGit from "simple-git";
 import { execSync } from "child_process";
 import { OpenAI } from "openai";
-import { glob } from "glob";
 
 // Initialize OpenAI with the API key from the environment
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: "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"
 });
 
-// Get the list of changed files from the pull request
+// Get the list of changed files from the source and destination branches
 const getChangedFiles = () => {
-    console.log("Getting list of changed files in the pull request...");
-    const changedFiles = execSync("git diff --name-only HEAD^", { encoding: "utf-8" });
-    return changedFiles.split("\n").filter((file) => file.trim().length > 0);
+    console.log("Getting list of changed files between the source and destination branches...");
+
+    try {
+        // Ensure all remote branches are fetched
+        console.log("Fetching all remote branches...");
+        execSync("git fetch --all", { stdio: "inherit" });
+
+        // Get the name of the current source branch
+        const sourceBranch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).trim();
+
+        // Define the destination branch (update 'main' if your default branch is different)
+        const destinationBranch = "main";
+
+        console.log(`Comparing changes from source branch: ${sourceBranch} to destination branch: ${destinationBranch}`);
+
+        // Ensure the destination branch is fetched
+        execSync(`git fetch origin ${destinationBranch}`, { stdio: "inherit" });
+
+        // Get the list of changed files between the two branches
+        const changedFiles = execSync(`git diff --name-only origin/${destinationBranch}..${sourceBranch}`, { encoding: "utf-8" });
+
+        return changedFiles.split("\n").filter((file) => file.trim().length > 0);
+    } catch (error) {
+        console.error("Error fetching changed files:", error.message);
+        return [];
+    }
 };
+
 
 // Generate unit tests with OpenAI
 const generateUnitTests = async (filePath) => {
