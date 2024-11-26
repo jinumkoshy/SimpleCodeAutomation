@@ -14,16 +14,22 @@ const getChangedFiles = () => {
     console.log("Getting list of changed files between the source and destination branches...");
 
     try {
-        // Get the name of the source and destination branches from the PR
+        // Ensure all remote branches are fetched
+        console.log("Fetching all remote branches...");
+        execSync("git fetch --all", { stdio: "inherit" });
+
+        // Get the name of the current source branch
         const sourceBranch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" }).trim();
-        const destinationBranch = execSync("git rev-parse --abbrev-ref origin/main", { encoding: "utf-8" }).trim();
+
+        // Define the destination branch (update 'main' if your default branch is different)
+        const destinationBranch = "main";
 
         console.log(`Comparing changes from source branch: ${sourceBranch} to destination branch: ${destinationBranch}`);
 
-        // Fetch the latest changes for the destination branch
-        execSync(`git fetch origin ${destinationBranch}`);
+        // Ensure the destination branch is fetched
+        execSync(`git fetch origin ${destinationBranch}`, { stdio: "inherit" });
 
-        // Get the list of changed files
+        // Get the list of changed files between the two branches
         const changedFiles = execSync(`git diff --name-only origin/${destinationBranch}..${sourceBranch}`, { encoding: "utf-8" });
 
         return changedFiles.split("\n").filter((file) => file.trim().length > 0);
@@ -32,6 +38,7 @@ const getChangedFiles = () => {
         return [];
     }
 };
+
 
 // Generate unit tests with OpenAI
 const generateUnitTests = async (filePath) => {
