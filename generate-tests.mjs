@@ -13,17 +13,7 @@ const openai = new OpenAI({
 // Get the list of changed files from the pull request
 const getChangedFiles = () => {
     console.log("Getting list of changed files in the pull request...");
-
-    let changedFiles;
-    try {
-        // Check for changes in the pull request using the last commit
-        changedFiles = execSync("git diff --name-only HEAD^", { encoding: "utf-8" });
-    } catch (error) {
-        // Handle the case where HEAD^ is invalid (e.g., first commit or shallow clone)
-        console.warn("HEAD^ is invalid. Falling back to the initial commit.");
-        changedFiles = execSync("git diff --name-only HEAD", { encoding: "utf-8" });
-    }
-
+    const changedFiles = execSync("git diff --name-only HEAD^", { encoding: "utf-8" });
     return changedFiles.split("\n").filter((file) => file.trim().length > 0);
 };
 
