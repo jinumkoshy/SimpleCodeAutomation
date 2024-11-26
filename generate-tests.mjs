@@ -6,7 +6,7 @@ import { OpenAI } from "openai";
 
 // Initialize OpenAI with the API key from the environment
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: "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"
 });
 
 // Get the list of changed files from the source and destination branches
