@@ -6,7 +6,6 @@ import { execSync } from "child_process";
 
 // Initialize OpenAI
 const openai = new OpenAI({
-    //apiKey: "sk-proj-<YOUR-API-KEY>", // Replace with your OpenAI API key
 });
 
 // Fetch pull request and get changed files
