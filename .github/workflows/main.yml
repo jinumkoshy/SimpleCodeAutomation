@@ -30,7 +30,7 @@ jobs:
     - name: Generate Unit Tests
       env:
         OPENAI_API_KEY: "${{ secrets.OPENAI_API_KEY }}" # Use your OpenAI API Key securely
-      run: node generate-tests.js
+      run: node generate-tests.mjs
 
     # Step 5: Commit and push changes back to the pull request
     - name: Commit and Push Changes
