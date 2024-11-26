@@ -130,7 +130,7 @@ const main = async () => {
             }
         }
 
-        const gitToken = process.env.GITHUB_TOKEN;
+        const gitToken = process.env.GITHUBKEY_TOKEN;
         // GitHub repository URL (e.g., 'github.com/username/repo.git')
         const repoUrl = process.env.REPO_URL || 'github.com/jinumkoshy/SimpleCodeAutomation.git';
         // Initialize Git with token authentication
