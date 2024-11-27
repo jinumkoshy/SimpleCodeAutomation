@@ -33,6 +33,7 @@ exports.minimumSecurePage = async (req, res) => {
   })
 }
 
+
 exports.latestReleasesPage = async (req, res) => {
   const releases = await getJSON(NODE_API_URL)
   const latest = getLatestReleases(releases)
