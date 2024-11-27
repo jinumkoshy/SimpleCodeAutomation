@@ -64,9 +64,11 @@ const generateUnitTests = async (filePath) => {
 
     const prompt = `
         Generate valid unit tests in TypeScript using Jest framework for the following code:
-        Do not include any setup instructions, external library imports like 'supertest', or other boilerplate code.
+        Do not include any setup instructions, external library imports like 'supertest', or other boilerplate code. 
+        Ensure the tests are robust and include the following: Validate expected behavior for valid inputs and scenarios, 
+        Check error handling, invalid inputs, and unexpected situations, Test edge cases such as minimum, maximum, or empty values.
         Only provide the Jest test code in TypeScript, without markdown or code block delimiters like \`\`\`.
-        The generated code should be ready to run with Jest.
+        The generated code should be complete, structured, and ready to run with Jest.
         ${fileContent}
     `;
 
@@ -92,6 +94,15 @@ const checkSpecFileExists = (filePath) => {
     const specFilePath = filePath.replace(/\.(js|ts)$/, ".spec.$1");
     return fs.existsSync(specFilePath);
 };
+
+// Function to push changes to GitHub
+async function pushToGitHub(gitToken, repoUrl) {
+    const git = configureGitWithToken(gitToken, repoUrl);
+    await git.add(".");
+    await git.commit("Add/Update unit tests for changed files");
+    await git.push();
+    console.log("Unit tests added/updated and changes pushed to the repository.");
+}
 
 // Main function
 const main = async () => {
@@ -133,12 +144,8 @@ const main = async () => {
         const gitToken = process.env.GITHUBKEY_TOKEN;
         // GitHub repository URL (e.g., 'github.com/username/repo.git')
         const repoUrl = process.env.REPO_URL || 'github.com/jinumkoshy/SimpleCodeAutomation.git';
-        // Initialize Git with token authentication
-        const git = configureGitWithToken(gitToken, repoUrl);
-        await git.add(".");
-        await git.commit("Add/Update unit tests for changed files");
-        await git.push();
-        console.log("Unit tests added/updated and changes pushed to the repository.");
+        // Call the function to push changes
+        await pushToGitHub(gitToken, repoUrl);
     } catch (error) {
         console.error("Error:", error.message);
     }
