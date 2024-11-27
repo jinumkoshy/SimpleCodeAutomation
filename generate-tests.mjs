@@ -56,7 +56,6 @@ const getChangedFiles = () => {
     }
 };
 
-
 // Generate unit tests with OpenAI
 const generateUnitTests = async (filePath) => {
     const fileContent = await fs.readFile(filePath, "utf-8");
@@ -90,7 +89,23 @@ const generateUnitTests = async (filePath) => {
 // Check if a corresponding .spec file exists
 const checkSpecFileExists = (filePath) => {
     const specFilePath = filePath.replace(/\.(js|ts)$/, ".spec.$1");
-    return fs.existsSync(specFilePath);
+    return fs.existsSync(specFilePath) ? specFilePath : null;
+};
+
+// Update or overwrite an existing spec file
+const updateSpecFile = async (specFilePath, newTestCode) => {
+    try {
+        console.log(`Updating existing spec file: ${specFilePath}`);
+        const existingContent = await fs.readFile(specFilePath, "utf-8");
+        
+        // Append or merge the new test code with the existing content
+        const updatedContent = `${existingContent}\n\n// Newly generated tests\n${newTestCode}`;
+        
+        await fs.writeFile(specFilePath, updatedContent, "utf-8");
+        console.log(`Spec file updated: ${specFilePath}`);
+    } catch (error) {
+        console.error(`Failed to update spec file: ${specFilePath}`, error.message);
+    }
 };
 
 // Main function
@@ -99,8 +114,10 @@ const main = async () => {
         // Get the list of changed files in the pull request
         const changedFiles = getChangedFiles();
 
-        // Filter for TypeScript or JavaScript files
-        const sourceFiles = changedFiles.filter((file) => /\.(ts|js)$/.test(file));
+        // Filter for TypeScript or JavaScript files, excluding .spec files
+        const sourceFiles = changedFiles.filter(
+            (file) => /\.(ts|js)$/.test(file) && !/\.spec\.(ts|js)$/.test(file)
+        );
 
         if (sourceFiles.length === 0) {
             console.log("No source files changed. Nothing to process.");
@@ -112,19 +129,26 @@ const main = async () => {
                 const absolutePath = path.resolve(filePath);
 
                 // Check if a spec file already exists
-                if (checkSpecFileExists(absolutePath)) {
+                const specFilePath = checkSpecFileExists(absolutePath);
+                if (specFilePath) {
                     console.log(`Spec file already exists for: ${filePath}. Updating...`);
+
+                    // Generate unit tests
+                    const newTestCode = await generateUnitTests(absolutePath);
+
+                    // Update the existing spec file
+                    await updateSpecFile(specFilePath, newTestCode);
                 } else {
                     console.log(`No spec file found for: ${filePath}. Creating a new one...`);
+
+                    // Generate unit tests
+                    const testCode = await generateUnitTests(absolutePath);
+
+                    // Create a new spec file
+                    const newSpecFilePath = absolutePath.replace(/\.(ts|js)$/, ".spec.$1");
+                    await fs.writeFile(newSpecFilePath, testCode, "utf-8");
+                    console.log(`Unit test written to: ${newSpecFilePath}`);
                 }
-
-                // Generate unit tests
-                const testCode = await generateUnitTests(absolutePath);
-
-                // Create or update the spec file
-                const specFilePath = absolutePath.replace(/\.(ts|js)$/, ".spec.$1");
-                await fs.writeFile(specFilePath, testCode, "utf-8");
-                console.log(`Unit test written to: ${specFilePath}`);
             } catch (error) {
                 console.error(`Failed to process file ${filePath}:`, error.message);
             }
