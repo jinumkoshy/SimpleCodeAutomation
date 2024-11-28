@@ -81,6 +81,23 @@ const generateReviewComment = async (filePath) => {
     return reviewComment;
 };
 
+
+const postOverallReviewComment = async (repoOwner, repoName, pullNumber, comment) => {
+    try {
+        await octokit.rest.pulls.createReview({
+            owner: repoOwner,
+            repo: repoName,
+            pull_number: pullNumber,
+            body: comment,
+            event: "COMMENT", // Use "COMMENT" to post a general comment
+        });
+
+        console.log("Overall review comment added to the pull request.");
+    } catch (error) {
+        console.error("Failed to post overall review comment:", error.message);
+    }
+};
+
 // Post review comments on the PR using GitHub API
 const postReviewComment = async (repoOwner, repoName, pullNumber, filePath, comment) => {
     try {
@@ -155,7 +172,7 @@ const main = async () => {
                 const reviewComment = await generateReviewComment(absolutePath);
 
                 // Post the review comment to the PR
-                await postReviewComment(repoOwner, repoName, pullNumber, filePath, reviewComment);
+                await postOverallReviewComment(repoOwner, repoName, pullNumber, reviewComment);
             } catch (error) {
                 console.error(`Failed to process file ${filePath}:`, error.message);
             }
