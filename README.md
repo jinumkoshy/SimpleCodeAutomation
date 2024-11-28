@@ -21,10 +21,10 @@ Triggered when a pull request (PR) is created, the pipeline provides automated f
 ---
 
 ## Workflow Architecture
-
+![image](https://github.com/jinumkoshy/SimpleCodeAutomation/blob/main/public/images/Component.jpg)
 ### Trigger
 - **Event**: The pipeline is triggered by a pull request creation.
-
+![image](https://github.com/jinumkoshy/SimpleCodeAutomation/blob/main/public/images/Sequence.jpg)
 ### Steps
 1. **Code Analysis**:
    - Use OpenAI to review code changes for quality and security.
@@ -39,6 +39,7 @@ Triggered when a pull request (PR) is created, the pipeline provides automated f
    - A PR is raised to merge the feedback branch into the base branch.
 
 ### Workflow Diagram
+![image](https://github.com/jinumkoshy/SimpleCodeAutomation/blob/main/public/images/flowchart.jpg)
 
 
 ## Technical Details
