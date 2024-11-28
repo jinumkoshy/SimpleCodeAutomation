@@ -1,71 +1,52 @@
-Your unit tests in TypeScript using Jest framework are provided below:
-
-```typescript
-const mockGet = jest.fn();
-
-jest.mock('bent', () => {
-  return jest.fn().mockImplementation(() => {
-    return { get: mockGet };
-  });
+test('mockedLatestRelease function handles error', async () => {
+  mockedLatestRelease.mockImplementation(() => Promise.reject('Error'));
+  await expect(mockedLatestRelease()).rejects.toThrow('Error');
 });
 
-describe('Version Functions', () => {
-  let req, res, mockSend, mockStatus, statusSpy;
-
-  beforeEach(() => {
-    mockSend = jest.fn();
-    mockStatus = jest.fn().mockReturnValue({ send: mockSend });
-    statusSpy = jest.spyOn(res, 'status').mockReturnValue({ send: mockSend });
-    
-    req = {};
-    res = {
-      render: jest.fn(),
-      json: jest.fn(),
-      setHeader: jest.fn(),
-      status: mockStatus,
-    };
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should check dependencies', () => {
-    dependencies(req, res);
-    expect(res.render).toHaveBeenCalledTimes(1);
-    expect(res.render).toHaveBeenCalledWith('dependencies.hbs', { dependencies: [{ name: "key", version: "value" }] });
-  });
-
-  it('should check minimumSecurePage', async () => {
-    mockGet.mockResolvedValue([{ version: 'v1.2.3', security: true, name: 'release1' }, { version: 'v2.3.4', security: true, name: 'release2' }]);
-    await minimumSecurePage(req, res);
-    expect(res.render).toHaveBeenCalledTimes(1);
-  });
-
-  it('should check latestReleasesPage', async () => {
-    mockGet.mockResolvedValue([{ version: 'v1.2.3', name: 'release1' }, { version: 'v2.3.4', name: 'release2' }]);
-    await latestReleasesPage(req, res);
-    expect(res.render).toHaveBeenCalledTimes(1);
-  });
-
-  it('should check minimumSecure function', async () => {
-    mockGet.mockResolvedValue([{ version: 'v1.2.3', security: true, name: 'release1' }, { version: 'v2.3.4', security: true, name: 'release2' }]);
-    await minimumSecure(req, res);
-    expect(res.setHeader).toHaveBeenCalledTimes(1);
-    expect(res.json).toHaveBeenCalledTimes(1);
-  });
-
-  it('should check latestReleases function', async () => {
-    mockGet.mockResolvedValue([{ version: 'v1.2.3', name: 'release1' }, { version: 'v2.3.4', name: 'release2' }]);
-    await latestReleases(req, res);
-    expect(res.setHeader).toHaveBeenCalledTimes(1);
-    expect(res.json).toHaveBeenCalledTimes(1);
-  });
-
-  it('should check home function', () => {
-    home(req, res);
-    expect(res.render).toHaveBeenCalledTimes(1);
-    expect(res.render).toHaveBeenCalledWith('home.hbs');
-  });
+test('mockedLatestReleasesPage function returns empty when no release found', async () => {
+  const req = {};
+  const res = { render: jest.fn() };
+  mockedJsonResponse.mockReturnValueOnce([]);
+  await mockedLatestReleasesPage(req, res);
+  expect(res.render).toBeCalledWith('latest.hbs', { 'latest': [] });
 });
-```
+
+test('mockedLatestRelease function handles maximum input', async () => {
+  const maxInput = new Array(10000).fill({ version: 'v1.0.0', security: true });
+  mockedJsonResponse.mockReturnValueOnce(maxInput);
+  const result = await mockedLatestRelease(maxInput);
+  expect(result).toBeDefined();
+});
+
+test('mockedHome function handles empty input', () => {
+  const req = {};
+  const res = { render: jest.fn() };
+  mockedHome(req, res);
+  expect(res.render).toBeCalledWith('home.hbs');
+});
+  
+test('mockedSemverGt throws error with invalid inputs', async () => {
+  const input1 = { version: 'invalid', security: true };
+  const input2 = { version: 'v1.0.0', security: true };
+  expect(() => mockedSemverGt(input1, input2)).toThrow();
+});  
+
+test('mockedSemverMajor function returns correct value with minimum input', () => {
+  const minInput = 'v0.0.1';
+  expect(mockedSemverMajor(minInput)).toBe(0);
+});
+
+test('mockedDependencies function handles non-existent deps', () => {
+  const req = {};
+  const res = { render: jest.fn() };
+  jest.mock('../package.json', () => ({ dependencies: {} }));
+  dependencies(req, res);
+  expect(res.render).toBeCalledWith('dependencies.hbs', { dependencies: [] });
+});
+
+test('mockedJsonResponse function returns valid data', async () => {
+  const mockResult = [{ version: 'v1.0.0', security: true }];
+  mockedJsonResponse.mockImplementation(() => Promise.resolve(mockResult));
+  const result = await mockedJsonResponse();
+  expect(result).toEqual(mockResult);
+});

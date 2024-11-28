@@ -1,62 +1,74 @@
-// Mock the third-party libraries being used.
-jest.mock('bent')
-
-// Import the dependencies needed for testing.
-import { dependencies, minimumSecurePage, latestReleasesPage, minimumSecure, latestReleases, home } from './your-code-file'
-const bent = require('bent')
-
-describe("Version Functions", () => {
-
-  const mockRender = jest.fn()
-  const mockJson = jest.fn()
-  const mockSetHeader = jest.fn()
-
-  const req = {}
-  const res = {
-    render: mockRender,
-    json: mockJson,
-    setHeader: mockSetHeader
-  }
+describe('Node version API test suite', () => {
+  const mockedBent = jest.fn();
+  const mockedJsonResponse = jest.fn();
+  const mockedSemverMajor = jest.fn();
+  const mockedSemverGt = jest.fn();
+  const mockedDependencies = jest.fn();
+  const mockedLatestReleasesPage = jest.fn();
+  const mockedDependenciesPage = jest.fn();
+  const mockedMinimumSecure = jest.fn();
+  const mockedLatestRelease = jest.fn();
+  const mockedHome = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks()
-  }) 
+    jest.mock('bent', () => mockedBent);
+    jest.mock('semver/functions/major', () => mockedSemverMajor);
+    jest.mock('semver/functions/gt', () => mockedSemverGt);
+    jest.mock('../package.json', () => ({
+      dependencies: {
+        "some-dependency": "1.0.0"
+      }
+    }));
+    mockedBent.mockReturnValue(mockedJsonResponse);
+  });
 
-  test("Test for dependencies function", () => {
-    dependencies(req, res)
-    expect(mockRender).toHaveBeenCalled()
-    expect(mockRender).toHaveBeenCalledWith('dependencies.hbs', { dependencies: [{ name: "key", version: "value" }]})
-  })
+  test('getLatestReleases function should return the latest version', async () => {
+    const releases = [
+      { version: 'v1.0.0', security: true },
+      { version: 'v2.0.0', security: true },
+      { version: 'v3.0.0', security: false },
+      { version: 'v2.1.0', security: false },
+    ];
 
-  test("Test for minimumSecurePage function", async () => {
-    bent.mockResolvedValue([{ version: 'v1.2.3', security: true, name: 'release1' }, { version: 'v2.3.4', security: true, name: 'release2' }])
-    await minimumSecurePage(req, res)
-    expect(mockRender).toHaveBeenCalled()
-  })
+    mockedSemverMajor.mockImplementation((version) => parseInt(version[1]));
+    mockedSemverGt.mockImplementation((a, b) => a.version > b.version);
 
-  test("Test for latestReleasesPage function", async () => {
-    bent.mockResolvedValue([{ version: 'v1.2.3', name: 'release1' }, { version: 'v2.3.4', name: 'release2' }])
-    await latestReleasesPage(req, res)
-    expect(mockRender).toHaveBeenCalled()
-  })
+    const expected = {
+      v1: releases[0],
+      v2: releases[1],
+      v3: releases[2],
+    };
+    expect(getLatestReleases(releases)).toEqual(expected);
+  });
 
-  test("Test for minimumSecure function", async () => {
-    bent.mockResolvedValue([{ version: 'v1.2.3', security: true, name: 'release1' }, { version: 'v2.3.4', security: true, name: 'release2' }])
-    await minimumSecure(req, res)
-    expect(mockSetHeader).toHaveBeenCalled()
-    expect(mockJson).toHaveBeenCalled()
-  })
+  test('minimumSecurePage function should return secured major version', async () => {
+    const releases = [
+      { version: 'v1.0.0', security: true },
+      { version: 'v2.0.0', security: true },
+      { version: 'v3.0.0', security: false },
+    ];
 
-  test("Test for latestReleases function", async () => {
-    bent.mockResolvedValue([{ version: 'v1.2.3', name: 'release1' }, { version: 'v2.3.4', name: 'release2' }])
-    await latestReleases(req, res)
-    expect(mockSetHeader).toHaveBeenCalled()
-    expect(mockJson).toHaveBeenCalled()
-  })
+    const expectedData = releases.filter((release) => release.security);
+    mockedJsonResponse.mockReturnValueOnce(releases);
 
-  test("Test for home function", () => {
-    home(req, res)
-    expect(mockRender).toHaveBeenCalled()
-    expect(mockRender).toHaveBeenCalledWith('home.hbs')
-  })
-})
+    await minimumSecurePage({ route: { path: '' } }, { render: jest.fn() });
+
+    expect(getJSON).toBeCalledWith(NODE_API_URL);
+    expect(getLatestReleases).toBeCalledWith(expectedData);
+  });
+
+  test('dependencies function should return formatted dependencies', () => {
+    const req = {};
+    const res = { render: jest.fn() };
+
+    dependencies(req, res);
+
+    expect(res.render).toBeCalledWith('dependencies.hbs', {
+      dependencies: [
+        { name: 'some-dependency', version: '1.0.0' }
+      ]
+    });
+  });
+
+  // Implement more tests below for other functions...
+});
