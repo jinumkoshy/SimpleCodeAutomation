@@ -1,7 +1,7 @@
 # GitHub Actions Pipeline: Automated Code Review, Security Review, and Unit Test Creation
 
 ## Overview
-
+![image](https://github.com/user-attachments/assets/208470c7-eb38-4827-9927-507f9427a87d)
 This pipeline automates:
 1. **Code Review**: Checks code quality and adherence to best practices.
 2. **Security Review**: Detects vulnerabilities and anti-patterns.
