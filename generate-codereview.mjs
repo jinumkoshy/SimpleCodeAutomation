@@ -12,7 +12,7 @@ const openai = new OpenAI({
 
 // Initialize Octokit with GitHub token
 const octokit = new Octokit({
-    auth: process.env.GITHUBKEY_TOKEN,
+    auth: process.env.GITHUB_TOKEN,
 });
 
 const parsePullRequestId = githubRef => {
