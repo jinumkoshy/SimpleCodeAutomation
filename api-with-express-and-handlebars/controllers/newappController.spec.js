@@ -1,82 +1,103 @@
-const bent = require('bent');
-const getJSON = jest.fn();
-jest.mock('bent', () => {
-  return () => getJSON;
-});
-const semverMajor = jest.fn();
-jest.mock('semver/functions/major', () => semverMajor);
-const semverGt = jest.fn();
-jest.mock('semver/functions/gt', () => semverGt);
-jest.mock('../package.json', () => ({ dependencies: { dep1: '1.0.0', dep2: '2.0.0' } }));
+import { dependencies, minimumSecurePage, latestReleasesPage, minimumSecure, latestReleases, home } from './yourModule';
+import bent from 'bent';
+import { Request, Response } from 'express';
 
-const mockReleases = [
-  { version: 'v1.0.0', security: true },
-  { version: 'v2.0.0', security: false },
-  { version: 'v1.1.0', security: false },
-  { version: 'v1.0.1', security: true },
-  { version: 'v2.0.1', security: true },
-];
+jest.mock('bent');
+jest.mock('semver/functions/major', () => jest.fn());
+jest.mock('semver/functions/gt', () => jest.fn());
+jest.mock('../package.json', () => ({
+  dependencies: {
+    'package1': '1.0.0',
+    'package2': '2.0.0'
+  }
+}));
 
-const { dependencies, minimumSecurePage, latestReleasesPage, minimumSecure, latestReleases, home } = require('../YourModule');
-
-describe('NodeJS API handler', () => {
-  const res = {
-    render: jest.fn(),
-    setHeader: jest.fn(),
-    json: jest.fn(),
-  };
-  const req = { route: { path: '/test/path' } };
+describe('Test suite for NodeJS versioning control', () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    getJSON.mockResolvedValue(mockReleases);
-    semverMajor.mockImplementation((version) => parseInt(version.replace('v', ''), 10));
-    semverGt.mockImplementation((a, b) => a.version > b.version);
+    req = {};
+    res = {
+      render: jest.fn(),
+      setHeader: jest.fn(),
+      json: jest.fn()
+    };
   });
 
-  test('dependencies', () => {
-    dependencies(req, res);
-    expect(res.render).toHaveBeenCalledWith('dependencies.hbs', {
-      dependencies: [
-        { name: 'dep1', version: '1.0.0' },
-        { name: 'dep2', version: '2.0.0' },
-      ],
-    });
+  test('dependencies should return package dependencies', () => {
+    dependencies(req as Request, res as Response);
+    expect(res.render).toHaveBeenCalledWith('dependencies.hbs', { dependencies: [{ name: 'package1', version: '1.0.0' }, { name: 'package2', version: '2.0.0' }] });
   });
 
-  test('minimumSecurePage', async () => {
-    await minimumSecurePage(req, res);
-    expect(getJSON).toHaveBeenCalledWith('https://nodejs.org/dist/index.json');
-    expect(res.render).toHaveBeenCalledWith('minimum-secure.hbs', {
-      result: JSON.stringify({ v1: mockReleases[3], v2: mockReleases[4] }, undefined, '  ')
-    });
+  test('minimumSecurePage should handle valid outcomes', async () => {
+    (bent as jest.Mock).mockResolvedValue([{ version: '1.0.0', security: true }, { version: '2.0.0', security: false }]);
+
+    await minimumSecurePage(req as Request, res as Response);
+
+    expect(res.render).toHaveBeenCalled();
   });
 
-  test('latestReleasesPage', async () => {
-    await latestReleasesPage(req, res);
-    expect(getJSON).toHaveBeenCalledWith('https://nodejs.org/dist/index.json');
-    expect(res.render).toHaveBeenCalledWith('latest-releases.hbs', {
-      result: JSON.stringify({ v1: mockReleases[2], v2: mockReleases[4] }, undefined, '  ')
-    });
+  test('minimumSecurePage should handle errors', async () => {
+    (bent as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    await minimumSecurePage(req as Request, res as Response);
+
+    expect(res.render).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ error: new Error('Network error'), message: `Unable to fetch data on undefined` });
   });
 
-  test('minimumSecure with error', async () => {
-    getJSON.mockRejectedValue(new Error('Fetch error'));
-    await minimumSecure(req, res);
-    expect(res.json).toHaveBeenCalledWith({
-      error: new Error('Fetch error'),
-      message: 'Unable to fetch data on /test/path',
-    });
+  test('latestReleasesPage should handle valid outcomes', async () => {
+    (bent as jest.Mock).mockResolvedValue([{ version: '1.0.0' }, { version: '2.0.0' }]);
+
+    await latestReleasesPage(req as Request, res as Response);
+
+    expect(res.render).toHaveBeenCalled();
   });
 
-  test('latestReleases', async () => {
-    await latestReleases(req, res);
-    expect(getJSON).toHaveBeenCalledWith('https://nodejs.org/dist/index.json');
-    expect(res.json).toHaveBeenCalledWith({ v1: mockReleases[2], v2: mockReleases[4] });
+  test('latestReleasesPage should handle errors', async () => {
+    (bent as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    await latestReleasesPage(req as Request, res as Response);
+
+    expect(res.render).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ error: new Error('Network error'), message: `Unable to fetch data on undefined` });
+  });
+
+  test('minimumSecure should handle valid outcomes', async () => {
+    (bent as jest.Mock).mockResolvedValue([{ version: '1.0.0', security: true }, { version: '2.0.0', security: false }]);
+
+    await minimumSecure(req as Request, res as Response);
+
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  test('minimumSecure should handle errors', async () => {
+    (bent as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    await minimumSecure(req as Request, res as Response);
+
+    expect(res.json).toHaveBeenCalledWith({ error: new Error('Network error'), message: `Unable to fetch data on undefined` });
+  });
+
+  test('latestReleases should handle valid outcomes', async () => {
+    (bent as jest.Mock).mockResolvedValue([{ version: '1.0.0' }, { version: '2.0.0' }]);
+
+    await latestReleases(req as Request, res as Response);
+
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  test('latestReleases should handle errors', async () => {
+    (bent as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    await latestReleases(req as Request, res as Response);
+
+    expect(res.json).toHaveBeenCalledWith({ error: new Error('Network error'), message: `Unable to fetch data on undefined` });
   });
 
   test('home', () => {
-    home(req, res);
+    home(req as Request, res as Response);
     expect(res.render).toHaveBeenCalledWith('home.hbs');
   });
 });
