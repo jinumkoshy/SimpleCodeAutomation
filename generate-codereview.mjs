@@ -57,12 +57,11 @@ const generateReviewComment = async (filePath) => {
     const fileContent = await fs.readFile(filePath, "utf-8");
     console.log(`Generating review comment for file: ${filePath}`);
 
-    const prompt = `
-        Review the following TypeScript/JavaScript code for potential issues or areas where unit tests are missing.
-        Provide clear and actionable suggestions for improvement. Focus on code logic, error handling, and edge cases.
-        Include examples of unit tests that could be added.
-        ${fileContent}
-    `;
+    const prompt = `Review and provide constructive feedback for the following TypeScript/JavaScript code for potential issues 
+        like code quality & readability. Provide clear and actionable suggestions for improvement, if possible give 
+        code suggections. Focus on code logic, error handling, and edge cases. Also provide any potential scalability 
+        issues, Security and Performance issues.
+        ${fileContent}`;
 
        const response = await openai.chat.completions.create({
         model: "gpt-4",
