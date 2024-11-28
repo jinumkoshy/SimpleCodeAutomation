@@ -57,6 +57,13 @@ const generateReviewComment = async (filePath) => {
         ${fileContent}
     `;
 
+    const parsePullRequestId = githubRef => {
+        const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
+        if (!result) throw new Error("Reference not found.");
+        const [, pullRequestId] = result;
+        return pullRequestId;
+      };
+
     const response = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
@@ -128,7 +135,7 @@ const main = async () => {
         // Get repository information
         const repoOwner = process.env.REPO_OWNER;
         const repoName = process.env.REPO_NAME;
-        const pullNumber = parseInt(github.event.number, 10);
+        const pullNumber = parsePullRequestId(process.env.GITHUB_REF, 31);
 
         console.console.log(`pullNumber ${pullNumber}:`, pullNumber);
 
