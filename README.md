@@ -14,7 +14,7 @@ Triggered when a pull request (PR) is created, the pipeline provides automated f
 ---
 ## Value Proposition
 
-Automated unit test creation and code review by AI revolutionizes software development by:
+Automated unit test creation and code review by AI revolutionizes software development reducing **Tech Debt** of products by:
 
 **Enhancing Productivity**: Automating repetitive tasks, allowing developers to focus on core development and innovation.
 
