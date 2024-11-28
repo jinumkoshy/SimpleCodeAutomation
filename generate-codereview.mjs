@@ -15,6 +15,13 @@ const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN,
 });
 
+const parsePullRequestId = githubRef => {
+    const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
+    if (!result) throw new Error("Reference not found.");
+    const [, pullRequestId] = result;
+    return pullRequestId;
+};
+
 // Get the list of changed files from the source and destination branches
 const getChangedFiles = () => {
     console.log("Getting list of changed files between the source and destination branches...");
@@ -57,14 +64,7 @@ const generateReviewComment = async (filePath) => {
         ${fileContent}
     `;
 
-    const parsePullRequestId = githubRef => {
-        const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
-        if (!result) throw new Error("Reference not found.");
-        const [, pullRequestId] = result;
-        return pullRequestId;
-      };
-
-    const response = await openai.chat.completions.create({
+       const response = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
             { role: "system", content: "You are a helpful assistant." },
@@ -135,7 +135,9 @@ const main = async () => {
         // Get repository information
         const repoOwner = process.env.REPO_OWNER;
         const repoName = process.env.REPO_NAME;
-        const pullNumber = parsePullRequestId(process.env.GITHUB_REF, 31);
+        const githubRef = process.env.GITHUB_REF;
+
+        const pullNumber = parsePullRequestId(githubRef);
 
         console.console.log(`pullNumber ${pullNumber}:`, pullNumber);
 
