@@ -1,4 +1,4 @@
-name: Generate Unit Tests on Pull Request
+name: Generate Unit Tests and Code Review on Pull Request
 
 on:
   pull_request:
