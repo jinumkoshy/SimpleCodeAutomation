@@ -106,7 +106,7 @@ const postReviewComment = async (repoOwner, repoName, pullNumber, filePath, comm
             repo: repoName,
             pull_number: pullNumber,
             body: comment,
-            path: filePath,
+            commit_id: process.env.COMMIT_ID,
             line: line,
         });
 
