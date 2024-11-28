@@ -139,7 +139,7 @@ const main = async () => {
 
         const pullNumber = parsePullRequestId(githubRef);
 
-        console.console.log(`pullNumber ${pullNumber}:`, pullNumber);
+        console.log(`pullNumber ${pullNumber}:`, pullNumber);
 
         if (!repoOwner || !repoName || !pullNumber) {
             throw new Error("Repository owner, name, or pull request number is missing.");
