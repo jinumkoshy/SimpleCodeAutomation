@@ -150,7 +150,7 @@ const main = async () => {
         }
 
         // Get repository information
-        const repoOwner = "actions-user";//process.env.REPO_OWNER;
+        const repoOwner = "jinumkoshy";//process.env.REPO_OWNER;
         const repoName = "SimpleCodeAutomation";//process.env.REPO_NAME;
         const githubRef = process.env.GITHUB_REF;
 
